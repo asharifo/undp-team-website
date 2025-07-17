@@ -10,7 +10,7 @@ function App() {
 
   return (
     <>
-      <NavBar />
+      {/* <NavBar />*/}
       <main className="content">
         <Routes>
           <Route path="/" element={<DisasterDimensions/>} />

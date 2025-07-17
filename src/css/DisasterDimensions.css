@@ -1,7 +1,7 @@
 @import "./index.css";
 
 .disaster-dimensions {
-    background-color: black;
+    background-color: #141414;
     height: 100%;
     width: 100%;
     display: flex;
@@ -9,25 +9,22 @@
 }
 
 .slide-image {
-    width: 40vmin;
-    height: 56vmin;
+    width: 35vmin;
+    height: 50vmin;
     object-fit: cover;
     object-fit: center;
 }
 
 .image-track {
     display: flex;
-    gap: 4vmin;
+    gap: 3vmin;
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(0%, -50%);
-    width: 10000vw;
+    top: 25%;
 }
 
 .slider-container {
-    height: 100vh;
-    width: 100vw;
+    height: 100%;
+    width: 100%;
     overflow: hidden;
     position: relative;
 }
