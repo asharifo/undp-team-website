@@ -1,0 +1,82 @@
+@import "./index.css";
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: var(--undpds-color-gray-200);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.chat-container {
+    width: 80vw;
+    height: 80vh;
+    border: 1px solid var(--undpds-color-gray-500);
+    border-radius: 8px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background: var(--undpds-color-gray-300);
+}
+
+.message {
+    display: inline-block;
+    clear: both;
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.ai-message {
+    background: var(--undpds-color-blue-300);
+    float: left;
+    border-top-left-radius: 0;
+}
+
+.user-message {
+    background: var(--undpds-color-blue-200);
+    float: right;
+    border-top-right-radius: 0;
+}
+
+.input-form {
+    display: flex;
+    border-top: 1px solid var(--undpds-color-gray-700);
+}
+
+.input-form input {
+    flex: 1;
+    border: none;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.input-form button {
+    border: none;
+    padding: 10px 20px;
+    background: var(--undpds-color-blue-500);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.input-form button:hover {
+    background: var(--undpds-color-blue-700);
+}

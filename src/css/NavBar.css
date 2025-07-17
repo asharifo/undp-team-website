@@ -1,0 +1,33 @@
+@import "./index.css";
+
+.navbar {
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    position: fixed;
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    z-index: 5;
+}
+
+.navbar_list {
+  display: flex;
+  list-style: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.navbar_item {
+  margin-left: 1.5rem;
+}
+
+.navbar_link {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+}
+
+.navbar_link:hover {
+  color: grey;
+}
