@@ -71,23 +71,24 @@ export default function ImageSlider({ images }) {
   };
 
   useLayoutEffect(() => {
-    const el = fullscreenRef.current;
-    if (!el || !isFullscreen) return;
+    if (!isFullscreen || !fullscreenRef.current) return;
 
-    let tl = gsap.timeline();
-    // Slide each thumbnail up
-    slideRefs.current.forEach((slide, idx) => {
+    // Ensure starting horizontal position is set first
+    gsap.set(sectionsContainerRef.current, { xPercent: -currIndex * 100 });
+
+    const tl = gsap.timeline();
+    slideRefs.current.forEach((slide, i) => {
       if (slide) {
         tl.to(
           slide,
           { y: "-100vh", duration: 0.2, ease: "power3.in" },
-          idx * 0.05
+          i * 0.05
         );
       }
     });
+    gsap.to(fullscreenRef.current, { y: 0, duration: 0.6, ease: "power3.in" });
 
-    // slide it up
-    gsap.to(el, { y: "0%", delay: 0.1, duration: 0.6, ease: "power3.in" });
+    return () => tl.kill();
   }, [isFullscreen]);
 
   // Enter fullscreen with staggered image slide‑up and fullscreen overlay rise
@@ -124,8 +125,14 @@ export default function ImageSlider({ images }) {
 
   // Navigate between fullscreen sections
   const navigateToSection = (newIndex) => {
-    if (newIndex < 0 || newIndex >= images.length || newIndex === currIndex)
+    if (
+      newIndex < 0 ||
+      newIndex >= images.length ||
+      newIndex === currIndex ||
+      !sectionsContainerRef.current
+    )
       return;
+    gsap.killTweensOf(sectionsContainerRef.current);
     gsap.to(sectionsContainerRef.current, {
       x: `-${newIndex * 100}vw`,
       duration: 0.5,
@@ -179,11 +186,7 @@ export default function ImageSlider({ images }) {
               <ChevronLeft />
             </button>
 
-            <div
-              ref={sectionsContainerRef}
-              className="sections-container"
-              style={{ transform: `translateX(${-currIndex * 100}vw)` }}
-            >
+            <div ref={sectionsContainerRef} className="sections-container">
               {images.map((src, idx) => (
                 <div key={idx} className="fullscreen-section">
                   <div className="section-content">
