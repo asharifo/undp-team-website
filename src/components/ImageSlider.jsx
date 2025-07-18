@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
@@ -70,31 +70,30 @@ export default function ImageSlider({ images }) {
     enterFullscreen();
   };
 
-  // Enter fullscreen with staggered image slide‑up and fullscreen overlay rise
-  const enterFullscreen = () => {
-    const tl = gsap.timeline({
-      onComplete: () => {
-        setFullscreen(true);
-      },
-    });
+  useLayoutEffect(() => {
+    const el = fullscreenRef.current;
+    if (!el || !isFullscreen) return;
 
+    let tl = gsap.timeline();
     // Slide each thumbnail up
     slideRefs.current.forEach((slide, idx) => {
       if (slide) {
         tl.to(
           slide,
-          { y: "-100vh", duration: 0.3, ease: "power2.in" },
-          idx * 0.1
+          { y: "-100vh", duration: 0.2, ease: "power3.in" },
+          idx * 0.05
         );
       }
     });
 
-    // Then bring up the fullscreen overlay
-    const fsEl = fullscreenRef.current;
-    if (fsEl) {
-      gsap.set(fsEl, { y: "100%" });
-      tl.to(fsEl, { y: "0%", duration: 0.6, ease: "power3.in" });
-    }
+    // slide it up
+    gsap.to(el, { y: "0%", delay: 0.1, duration: 0.6, ease: "power3.in" });
+  }, [isFullscreen]);
+
+  // Enter fullscreen with staggered image slide‑up and fullscreen overlay rise
+  const enterFullscreen = () => {
+    const tl = gsap.timeline();
+    setFullscreen(true);
   };
 
   // Exit fullscreen with overlay drop + slide‑down reset
@@ -116,8 +115,8 @@ export default function ImageSlider({ images }) {
       if (slide) {
         tl.to(
           slide,
-          { y: "0", duration: 0.3, ease: "power2.out" },
-          `-=${0.4 - idx * 0.1}`
+          { y: "0", duration: 0.2, ease: "power3.in" },
+          `-=${0.4 - idx * 0.05}`
         );
       }
     });

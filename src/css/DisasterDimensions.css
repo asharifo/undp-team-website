@@ -52,6 +52,7 @@
     height: 100vh;
     background: rgba(0, 0, 0, 0.95);
     z-index: 1;
+    transform: translateY(100vh);
 }
 
 .fullscreen-content {
@@ -136,7 +137,7 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.1);
+    background: #141414;
     border: 1px solid rgba(15, 2, 2, 0.2);
     color: white;
     backdrop-filter: blur(10px);
