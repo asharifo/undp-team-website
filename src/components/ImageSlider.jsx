@@ -28,6 +28,18 @@ export default function ImageSlider({ images }) {
     const maxDrag = track.scrollWidth - container.offsetWidth;
     const buffer = window.innerWidth * 0.5;
 
+    const images = slideRefs.current
+      .map((slide) => slide?.querySelector("img"))
+      .filter(Boolean);
+    const setters = images.map((img) => gsap.quickSetter(img, "x", "px"));
+    const PARALLAX_RATIO = 0.2;
+
+    function updateParallax(draggable) {
+      const trackX = draggable.x; 
+      const shift = -trackX * PARALLAX_RATIO;
+      for (let i = 0; i < setters.length; i++) setters[i](shift);
+    }
+
     const instance = Draggable.create(track, {
       type: "x",
       bounds: { minX: -maxDrag - buffer, maxX: buffer },
@@ -41,8 +53,11 @@ export default function ImageSlider({ images }) {
       onRelease() {
         this.cursor = "grab";
       },
+      onDrag() { updateParallax(this); },
+      onThrowUpdate() { updateParallax(this); }
     })[0];
 
+    updateParallax(instance);
     draggableInstance.current = instance;
     return () => instance.kill();
   }, []);
