@@ -71,29 +71,39 @@ export default function ImageSlider({ images }) {
   };
 
   useLayoutEffect(() => {
-    if (!isFullscreen || !fullscreenRef.current) return;
-
-    // Ensure starting horizontal position is set first
-    gsap.set(sectionsContainerRef.current, { xPercent: -currIndex * 100 });
-
+    const track = trackRef.current;
+    const container = containerRef.current;
     const tl = gsap.timeline();
-    slideRefs.current.forEach((slide, i) => {
-      if (slide) {
-        tl.to(
-          slide,
-          { y: "-100vh", duration: 0.2, ease: "power3.in" },
-          i * 0.05
-        );
-      }
-    });
-    gsap.to(fullscreenRef.current, { y: 0, duration: 0.6, ease: "power3.in" });
 
+    if (isFullscreen) {
+      container.style.pointerEvents = "none";
+      track.style.pointerEvents = "none";
+      gsap.set(sectionsContainerRef.current, { xPercent: -currIndex * 100 });
+
+      slideRefs.current.forEach((slide, i) => {
+        if (slide) {
+          tl.to(
+            slide,
+            { y: "-100vh", duration: 0.2, ease: "power3.in" },
+            i * 0.05
+          );
+        }
+      });
+      gsap.to(fullscreenRef.current, {
+        y: 0,
+        delay: 0.1,
+        duration: 0.6,
+        ease: "power3.in",
+      });
+    } else {
+      container.style.pointerEvents = "auto";
+      track.style.pointerEvents = "auto";
+    }
     return () => tl.kill();
   }, [isFullscreen]);
 
   // Enter fullscreen with staggered image slide‑up and fullscreen overlay rise
   const enterFullscreen = () => {
-    const tl = gsap.timeline();
     setFullscreen(true);
   };
 
@@ -132,9 +142,8 @@ export default function ImageSlider({ images }) {
       !sectionsContainerRef.current
     )
       return;
-    gsap.killTweensOf(sectionsContainerRef.current);
     gsap.to(sectionsContainerRef.current, {
-      x: `-${newIndex * 100}vw`,
+      xPercent: -newIndex * 100,
       duration: 0.5,
       ease: "power3.inOut",
       onComplete: () => {
