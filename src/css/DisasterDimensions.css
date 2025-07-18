@@ -68,7 +68,6 @@
     display: flex;
     width: 100%;
     height: 100%;
-    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fullscreen-section {
@@ -160,3 +159,4 @@
 .nav-next {
     right: 2rem;
 }
+
