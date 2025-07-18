@@ -1,33 +1,34 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import "../css/NavBar.css"
-import { forwardRef } from "react";
 
-const NavBar = forwardRef((props, ref) => {
+function NavBar() {
+  const getLinkClass = ({ isActive }) =>
+    isActive ? "navbar_link active" : "navbar_link";
   return (
-    <nav ref={ref}className="navbar">
-      <a href="#top" className="logo">
+    <nav className="navbar">
+       {/*<a href="#top" className="logo">
         <img src="https://www.undp.org/sites/g/files/zskgke326/files/2025-04/undp-logo-blue.4f32e17f.svg"
           alt="UNDP logo" />
-      </a>
+      </a> */} 
       <ul className="navbar_list">
         <li className="navbar_item">
-          <Link to="/" className="navbar_link">
-            Disaster Dimensions
-          </Link>
+          <NavLink to="/" className={getLinkClass}>
+            Dimensions
+          </NavLink>
         </li>
         <li className="navbar_item">
-          <Link to="/chatbot" className="navbar_link">
+          <NavLink to="/chatbot" className={getLinkClass}>
             Chatbot
-          </Link>
+          </NavLink>
         </li>
         <li className="navbar_item">
-          <Link to="/more-info" className="navbar_link">
+          <NavLink to="/more-info" className={getLinkClass}>
             More Info
-          </Link>
+          </NavLink>
         </li>
       </ul>
     </nav>
   );
-});
+}
 
 export default NavBar

@@ -1,73 +1,216 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 gsap.registerPlugin(Draggable, InertiaPlugin);
+
 export default function ImageSlider({ images }) {
+  // refs
   const containerRef = useRef(null);
-  const trackRef     = useRef(null);
+  const trackRef = useRef(null);
+  const slideRefs = useRef([]);
+  const fullscreenRef = useRef(null);
+  const sectionsContainerRef = useRef(null);
+  const draggableInstance = useRef(null);
+
+  // state
+  const [isFullscreen, setFullscreen] = useState(false);
+  const [currIndex, setCurrIndex] = useState(0);
+
+  // Carousel drag and parallax effect
   useEffect(() => {
     const container = containerRef.current;
-    const track     = trackRef.current;
+    const track = trackRef.current;
     if (!container || !track) return;
 
     const maxDrag = track.scrollWidth - container.offsetWidth;
-    const buffer  = window.innerWidth * 0.5;
+    const buffer = window.innerWidth * 0.5;
 
-    Draggable.create(track, {
-      type:      "x",
-      bounds:    {
-        minX: -maxDrag - buffer,
-        maxX: buffer
-      },
-      inertia:   true,
-      dragResistance:  0.3,    
+    const instance = Draggable.create(track, {
+      type: "x",
+      bounds: { minX: -maxDrag - buffer, maxX: buffer },
+      inertia: true,
+      dragResistance: 0.3,
       throwResistance: 2000,
-      cursor:    "grab",
-      onPress() { this.cursor = "grabbing"; },
-      onRelease() { this.cursor = "grab"; },
-    });
+      cursor: "grab",
+      onPress() {
+        this.cursor = "grabbing";
+      },
+      onRelease() {
+        this.cursor = "grab";
+      },
+    })[0];
+
+    draggableInstance.current = instance;
+    return () => instance.kill();
   }, []);
 
-  const expandImage = (img) => {
-    const rect = img.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+  // Disable draggable and scroll down to transition back
+  useEffect(() => {
+    // Disable the draggable instance if in fullscreen mode
+    const inst = draggableInstance.current;
+    if (isFullscreen) {
+      inst?.disable();
+      // Scroll down to animate transition back to image-track
+      const onWheel = (e) => {
+        if (e.deltaY > 0) exitFullscreen();
+      };
+      window.addEventListener("wheel", onWheel);
+      return () => window.removeEventListener("wheel", onWheel);
+    } else {
+      inst?.enable();
+    }
+  }, [isFullscreen]);
 
-    // choose scale so image covers the viewport
-    const scaleX = vw / rect.width;
-    const scaleY = vh / rect.height;
-    const scale = Math.max(scaleX, scaleY);
+  // Thumbnail click to fullscreen mode
+  const handleThumbnailClick = (i) => {
+    setCurrIndex(i);
+    enterFullscreen();
+  };
 
-    // compute translation to center
-    const x = vw / 2 - (rect.left + rect.width / 2);
-    const y = vh / 2 - (rect.top + rect.height / 2);
+  // Enter fullscreen with staggered image slide‑up and fullscreen overlay rise
+  const enterFullscreen = () => {
+    const tl = gsap.timeline({
+      onComplete: () => {
+        setFullscreen(true);
+      },
+    });
 
-    gsap.to(img, {
-      zIndex: 1000,
-      scale,
-      x,
-      y,
-      duration: 0.6,
-      ease: "power3.out"
+    // Slide each thumbnail up
+    slideRefs.current.forEach((slide, idx) => {
+      if (slide) {
+        tl.to(
+          slide,
+          { y: "-100vh", duration: 0.3, ease: "power2.in" },
+          idx * 0.1
+        );
+      }
+    });
+
+    // Then bring up the fullscreen overlay
+    const fsEl = fullscreenRef.current;
+    if (fsEl) {
+      gsap.set(fsEl, { y: "100%" });
+      tl.to(fsEl, { y: "0%", duration: 0.6, ease: "power3.in" });
+    }
+  };
+
+  // Exit fullscreen with overlay drop + slide‑down reset
+  const exitFullscreen = () => {
+    const tl = gsap.timeline({
+      onComplete: () => {
+        setFullscreen(false);
+      },
+    });
+
+    // Drop the overlay
+    const fsEl = fullscreenRef.current;
+    if (fsEl) {
+      tl.to(fsEl, { y: "100%", duration: 0.6, ease: "power3.in" });
+    }
+
+    // Slide thumbnails back down
+    slideRefs.current.forEach((slide, idx) => {
+      if (slide) {
+        tl.to(
+          slide,
+          { y: "0", duration: 0.3, ease: "power2.out" },
+          `-=${0.4 - idx * 0.1}`
+        );
+      }
     });
   };
-  
+
+  // Navigate between fullscreen sections
+  const navigateToSection = (newIndex) => {
+    if (newIndex < 0 || newIndex >= images.length || newIndex === currIndex)
+      return;
+    gsap.to(sectionsContainerRef.current, {
+      x: `-${newIndex * 100}vw`,
+      duration: 0.5,
+      ease: "power3.inOut",
+      onComplete: () => {
+        setCurrIndex(newIndex);
+      },
+    });
+  };
+
+  const handlePrevious = () => {
+    const newIndex = currIndex > 0 ? currIndex - 1 : images.length - 1;
+    navigateToSection(newIndex);
+  };
+
+  const handleNext = () => {
+    const newIndex = currIndex < images.length - 1 ? currIndex + 1 : 0;
+    navigateToSection(newIndex);
+  };
 
   return (
-    <div ref={containerRef} className="slider-container">
-      <div ref={trackRef} className="image-track">
-        {images.map((src, i) => (
-          <img
-            key={i}
-            src={src}
-            alt={`Slide ${i + 1}`}
-            className="slide-image"
-            onClick={(e) => expandImage(e.currentTarget)}
-          />
-        ))}
+    <>
+      {/* Thumbnail carousel */}
+      <div ref={containerRef} className="slider-container">
+        <div ref={trackRef} className="image-track">
+          {images.map((src, i) => (
+            <div
+              key={i}
+              className="slide"
+              ref={(el) => (slideRefs.current[i] = el)}
+              onClick={() => handleThumbnailClick(i)}
+            >
+              <img src={src} alt={`Slide ${i + 1}`} />
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+
+      {/* Fullscreen overlay */}
+      {isFullscreen && (
+        <div ref={fullscreenRef} className="fullscreen-overlay">
+          <div className="fullscreen-content">
+            <button className="close-button" onClick={exitFullscreen}>
+              <X />
+            </button>
+
+            <button
+              className="nav-button nav-previous"
+              onClick={handlePrevious}
+            >
+              <ChevronLeft />
+            </button>
+
+            <div
+              ref={sectionsContainerRef}
+              className="sections-container"
+              style={{ transform: `translateX(${-currIndex * 100}vw)` }}
+            >
+              {images.map((src, idx) => (
+                <div key={idx} className="fullscreen-section">
+                  <div className="section-content">
+                    <img
+                      src={src}
+                      alt={`Section ${idx + 1}`}
+                      className="section-image"
+                    />
+                    <div className="section-info">
+                      <h2 className="section-title">Section {idx + 1}</h2>
+                      <p className="section-description">
+                        This is the content for section {idx + 1}. You can add
+                        any content here—text, videos, etc.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button className="nav-button nav-next" onClick={handleNext}>
+              <ChevronRight />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

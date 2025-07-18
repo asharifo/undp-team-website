@@ -8,11 +8,26 @@
     align-items: center;
 }
 
-.slide-image {
+.slide {
     width: 35vmin;
     height: 50vmin;
-    object-fit: cover;
-    object-fit: center;
+    overflow: hidden; 
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.slide:hover {
+    transform: scale(1.05);
+}
+
+.slide img {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
 }
 
 .image-track {
@@ -27,4 +42,120 @@
     width: 100%;
     overflow: hidden;
     position: relative;
+}
+
+.fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 1;
+}
+
+.fullscreen-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sections-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fullscreen-section {
+    width: 100vw;
+    height: 100vh;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    box-sizing: border-box;
+}
+
+.section-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1200px;
+    gap: 4rem;
+}
+
+.section-image {
+    width: 50%;
+    height: 70vh;
+    object-fit: cover;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.section-info {
+    width: 40%;
+    color: white;
+}
+
+.section-title {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #ffffff, #cccccc);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.section-description {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.8);
+}
+.close-button {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+    z-index: 2;
+}
+
+.close-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(15, 2, 2, 0.2);
+    color: white;
+    backdrop-filter: blur(10px);
+    width: 4rem;
+    height: 4rem;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.nav-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%) scale(1.1);
+}
+
+
+.nav-previous {
+    left: 2rem;
+}
+
+.nav-next {
+    right: 2rem;
 }
