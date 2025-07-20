@@ -35,10 +35,10 @@ export default function ImageSlider({ images }) {
     const PARALLAX_RATIO = 0.2;
 
     function updateParallax(draggable) {
-      const trackX = draggable.x; 
+      const trackX = draggable.x;
       const shift = -trackX * PARALLAX_RATIO;
       for (let i = 0; i < setters.length; i++) setters[i](shift);
-    }
+    } // make it so that images offscreen do not update
 
     const instance = Draggable.create(track, {
       type: "x",
@@ -53,8 +53,12 @@ export default function ImageSlider({ images }) {
       onRelease() {
         this.cursor = "grab";
       },
-      onDrag() { updateParallax(this); },
-      onThrowUpdate() { updateParallax(this); }
+      onDrag() {
+        updateParallax(this);
+      },
+      onThrowUpdate() {
+        updateParallax(this);
+      },
     })[0];
 
     updateParallax(instance);
