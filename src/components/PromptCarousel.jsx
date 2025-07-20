@@ -3,7 +3,7 @@ import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
 
-const rowPrompts = [
+const prompts = [
   "What are the recommended evacuation routes for wildfires in my region?",
   "How should I prepare my family for a possible tsunami warning?",
   "What emergency kit items are essential for earthquake evacuation?",
@@ -19,9 +19,70 @@ const rowPrompts = [
 ];
 
 export default function PromptCarousel() {
+  const containerRef = useRef(null);
+  const scrollTimelineRef = useRef(null);
+  const duplicatedPrompts = [...prompts, ...prompts];
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Create infinite scroll animation
+    const totalWidth = container.scrollWidth / 2;
+
+    scrollTimelineRef.current = gsap.timeline({ repeat: -1 });
+    scrollTimelineRef.current.to(container, {
+      x: -totalWidth,
+      duration: 70,
+      ease: "none",
+    });
+    return () => {
+      scrollTimelineRef.current?.kill();
+    };
+  }, []);
+  const handleMouseEnter = () => {
+    scrollTimelineRef.current?.pause();
+  };
+
+  const handleMouseLeave = () => {
+    scrollTimelineRef.current?.resume();
+  };
+
+  const handleBubbleHover = (e) => {
+    gsap.to(e.currentTarget, {
+      y: -8,
+      scale: 1.05,
+      duration: 0.1,
+      ease: "none",
+    });
+  };
+
+  const handleBubbleLeave = (e) => {
+    gsap.to(e.currentTarget, {
+      y: 0,
+      scale: 1,
+      duration: 0.1,
+      ease: "none",
+    });
+  };
   return (
     <div className="prompt-carousel">
-      <div className="marquee"></div>
+      <div
+        className="marquee"
+        ref={containerRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {duplicatedPrompts.map((prompt, index) => (
+          <div
+            key={`${prompt.id}-${index}`}
+            className="prompt"
+            onMouseEnter={handleBubbleHover}
+            onMouseLeave={handleBubbleLeave}
+          >
+            {prompt}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
