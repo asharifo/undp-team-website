@@ -3,6 +3,7 @@ import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
 
+// Refactor into two components
 const prompts = [
   "What are the recommended evacuation routes for wildfires in my region?",
   "How should I prepare my family for a possible tsunami warning?",
@@ -18,7 +19,7 @@ const prompts = [
   "What communication channels are used for evacuation alerts?",
 ];
 
-export default function PromptCarousel() {
+export default function PromptCarousel( { onPromptSelect } ) {
   const containerRef = useRef(null);
   const scrollTimelineRef = useRef(null);
   const duplicatedPrompts = [...prompts, ...prompts];
@@ -78,6 +79,7 @@ export default function PromptCarousel() {
             className="prompt"
             onMouseEnter={handleBubbleHover}
             onMouseLeave={handleBubbleLeave}
+            onClick={() => onPromptSelect(prompt)}
           >
             {prompt}
           </div>

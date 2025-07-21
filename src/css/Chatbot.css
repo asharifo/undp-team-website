@@ -43,7 +43,7 @@
 
 .introText h1 {
     font-size: 5rem;
-    color: #3e5c76;
+    color: #415a77;
     font-weight: 800;
 }
 
@@ -72,5 +72,9 @@
     display: flex;
 }
 
-
-
+.messages {
+    width: 100%;
+    overflow-y: auto;
+    flex: 1;
+    padding: 10px;
+}
