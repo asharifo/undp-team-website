@@ -10,13 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@datastax/astra-db-ts": "^2.0.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.2.0",
     "@tailwindcss/vite": "^4.1.11",
+    "dotenv": "^17.2.0",
     "gsap": "^3.13.0",
     "lucide": "^0.525.0",
     "lucide-react": "^0.525.0",
+    "openai": "^5.10.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3",

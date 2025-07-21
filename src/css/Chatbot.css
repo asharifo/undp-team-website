@@ -4,23 +4,31 @@
     font-family: Arial, sans-serif;
     background: #141414;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     height: 100vh;
     width: 100vw;
 }
 
+.chatbot-elements {
+    width: 60vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .chatbot-box {
-    margin-top: 5%;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
     border-radius: 8px;
-    height: 55vh;
-    width: 60vw;
+    height: 70vh;
+    width: 100%;
     overflow: hidden;
+    margin-top: 10%;
 }
 
 .introText {
@@ -64,7 +72,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 60vw;
+    width: 100%;
 }
 
 .text-and-button {
@@ -77,4 +85,35 @@
     overflow-y: auto;
     flex: 1;
     padding: 10px;
+}
+
+.bubbles-container {
+    margin-right: auto;
+    margin-top: auto;
+}
+
+.loading-bubbles {
+    margin: 10px;
+    width: 60px;
+    aspect-ratio: 4;
+    background:
+        no-repeat radial-gradient(circle closest-side, #383838 90%, #0000) 0 50%,
+        no-repeat radial-gradient(circle closest-side, #383838 90%, #0000) 50% 50%,
+        no-repeat radial-gradient(circle closest-side, #383838 90%, #0000) 100% 50%;
+    background-size: calc(100%/3) 100%;
+    animation: loading 1s infinite linear;
+}
+
+@keyframes loading {
+    33% {
+        background-size: calc(100%/3) 0%, calc(100%/3) 100%, calc(100%/3) 100%;
+    }
+
+    50% {
+        background-size: calc(100%/3) 100%, calc(100%/3) 0%, calc(100%/3) 100%;
+    }
+
+    66% {
+        background-size: calc(100%/3) 100%, calc(100%/3) 100%, calc(100%/3) 0%;
+    }
 }

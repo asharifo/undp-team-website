@@ -3,6 +3,7 @@ import Button from "@mui/material/Button";
 import { Send } from "lucide-react";
 import { useState } from "react";
 
+// Make it clear the text after submission
 function InputForm({ onSendMessage, disabled }) {
   const [message, setMessage] = useState("");
   const handleSubmit = (e) => {
@@ -16,6 +17,7 @@ function InputForm({ onSendMessage, disabled }) {
     if (e.key === "Enter") {
       e.preventDefault();
       handleSubmit(e);
+      setMessage("");
     }
   };
 

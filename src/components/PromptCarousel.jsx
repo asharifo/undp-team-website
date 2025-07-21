@@ -3,7 +3,6 @@ import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 import { Observer } from "gsap/Observer";
 
-// Refactor into two components
 const prompts = [
   "What are the recommended evacuation routes for wildfires in my region?",
   "How should I prepare my family for a possible tsunami warning?",
@@ -51,7 +50,6 @@ export default function PromptCarousel( { onPromptSelect } ) {
   const handleBubbleHover = (e) => {
     gsap.to(e.currentTarget, {
       y: -8,
-      scale: 1.05,
       duration: 0.1,
       ease: "none",
     });
@@ -60,7 +58,6 @@ export default function PromptCarousel( { onPromptSelect } ) {
   const handleBubbleLeave = (e) => {
     gsap.to(e.currentTarget, {
       y: 0,
-      scale: 1,
       duration: 0.1,
       ease: "none",
     });

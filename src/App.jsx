@@ -1,4 +1,3 @@
-import { useLayoutEffect, useState } from "react";
 import "./css/App.css"
 import DisasterDimensions from "./pages/DisasterDimensions";
 import Chatbot from "./pages/Chatbot";
