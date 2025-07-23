@@ -1,15 +1,30 @@
 import "../css/Chatbot.css";
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import PromptCarousel from "../components/PromptCarousel";
 import InputForm from "../components/InputForm";
 import ChatMessage from "../components/ChatMessage";
 import TypingIndicator from "../components/TypingIndicator";
 
-// make it instantly scroll to new text 
+const prompts = [
+  "What are the recommended evacuation routes for wildfires in my region?",
+  "How should I prepare my family for a possible tsunami warning?",
+  "What emergency kit items are essential for earthquake evacuation?",
+  "When will authorities issue evacuation orders for hurricanes?",
+  "Provide recent flood frequency statistics in my country.",
+  "What is the average annual number of earthquakes in my region?",
+  "Show historical data on landslide incidents locally.",
+  "Which natural disasters pose the greatest risk here?",
+  "How can I develop a family evacuation plan for cyclones?",
+  "Where can I find approved shelters during severe storms?",
+  "Who coordinates local disaster response efforts?",
+  "What communication channels are used for evacuation alerts?",
+];
+
 function Chatbot() {
   const [hasStartedChat, setHasStartedChat] = useState(false);
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const messagesRef = useRef(null);
 
   const generateBotResponse = (userMessage) => {
     return "DisasterBot's response will show here";
@@ -20,7 +35,7 @@ function Chatbot() {
       setHasStartedChat(true);
     }
     const userMessage = {
-      id: Date.now().toString(), //!!!
+      id: Date.now().toString(), 
       text: messageText,
       isBot: false,
       timestamp: new Date(),
@@ -41,6 +56,12 @@ function Chatbot() {
     }, 1500);
   };
 
+  // Auto-scroll to new message
+  useEffect(() => {
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages]);
+
   return (
     <div className="chatbot-ui">
       <div className="chatbot-elements">
@@ -51,11 +72,11 @@ function Chatbot() {
               <h2>AI-Enabled Information on Disaster Risk and Response</h2>
               <h3>Ask me anything—or click an example to get started</h3>
               <div className="carousel-container">
-                <PromptCarousel onPromptSelect={handleSendMessage} />
+                <PromptCarousel prompts={prompts} onPromptSelect={handleSendMessage} />
               </div>
             </div>
           ) : (
-            <div className="messages">
+            <div ref={messagesRef} className="messages">
               {messages.map((message) => (
                 <ChatMessage
                   key={message.id}

@@ -85,11 +85,16 @@
     overflow-y: auto;
     flex: 1;
     padding: 10px;
+    overflow-x: hidden;
+    scrollbar-width: thin;               
+    scrollbar-color: #e0e1dd #1e1e1e; 
+    scroll-behavior: smooth;
 }
 
 .bubbles-container {
     margin-right: auto;
     margin-top: auto;
+    margin-bottom: 1rem;
 }
 
 .loading-bubbles {

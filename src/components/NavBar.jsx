@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
 import "../css/NavBar.css"
-
 function NavBar() {
   const getLinkClass = ({ isActive }) =>
     isActive ? "navbar_link active" : "navbar_link";

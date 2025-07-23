@@ -1,10 +1,5 @@
 function TypingIndicator() {
-    return (
-        <div className="loading-bubbles">
-
-        </div>
-    )
+  return <div className="loading-bubbles"></div>;
 }
 
-export default TypingIndicator
-
+export default TypingIndicator;

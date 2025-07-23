@@ -1,7 +1,6 @@
 import { Bot, User } from "lucide-react";
 import "../css/ChatMessage.css"
 
-//!!! FIX OVERFLOW ISSUE
 export default function ChatMessage({ message, isBot, timestamp }) {
   return (
     <div className={`chat-message ${isBot ? "bot" : "user"}`}>
