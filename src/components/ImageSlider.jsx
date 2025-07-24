@@ -1,11 +1,9 @@
-import React, { useEffect, useRef, useState, useLayoutEffect } from "react";
+import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-// Refactor into two components and add a position reference in fullscreen mode
-// OPTIMIZE !!!
 gsap.registerPlugin(Draggable, InertiaPlugin);
 
 export default function ImageSlider({ images }) {

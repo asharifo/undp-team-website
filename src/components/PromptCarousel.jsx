@@ -2,6 +2,7 @@ import "../css/PromptCarousel.css";
 import { useRef, useEffect } from "react";
 import { gsap } from "gsap";
 
+// Avoid using useEffect and fix gap issue
 export default function PromptCarousel( { prompts, onPromptSelect } ) {
   const containerRef = useRef(null);
   const scrollTimelineRef = useRef(null);
