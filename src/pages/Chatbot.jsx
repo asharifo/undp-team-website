@@ -4,6 +4,7 @@ import PromptCarousel from "../components/PromptCarousel";
 import InputForm from "../components/InputForm";
 import ChatMessage from "../components/ChatMessage";
 import TypingIndicator from "../components/TypingIndicator";
+//import { queryCountry } from "../scripts/query.js";
 
 const prompts = [
   "What are the recommended evacuation routes for wildfires in my region?",
@@ -20,23 +21,28 @@ const prompts = [
   "What communication channels are used for evacuation alerts?",
 ];
 
+const countries = [
+  "Kazakhstan",
+  "Kyrgyzstan",
+  "Tajikistan",
+  "Turkmenistan",
+  "Uzbekistan",
+];
+
 function Chatbot() {
   const [hasStartedChat, setHasStartedChat] = useState(false);
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [currCountry, setCurrCountry] = useState("");
+  const [showSelector, setShowSelector] = useState(true);
   const messagesRef = useRef(null);
-
-  const generateBotResponse = (userMessage) => {
-    return "DisasterBot's response will show here";
-  };
 
   const handleSendMessage = async (messageText) => {
     if (!hasStartedChat) {
       setHasStartedChat(true);
     }
     const userMessage = {
-      id: Date.now().toString(), 
+      id: Date.now().toString(),
       text: messageText,
       isBot: false,
       timestamp: new Date(),
@@ -44,17 +50,30 @@ function Chatbot() {
     setMessages((prev) => [...prev, userMessage]);
     setIsTyping(true);
 
-    setTimeout(() => {
-      //placeholder for api call
-      const botResponse = {
+    /*
+    try {
+      const botText = await queryCountry(messageText, currCountry);
+
+      const botMessage = {
         id: (Date.now() + 1).toString(),
-        text: generateBotResponse(messageText),
+        text: botText,
         isBot: true,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, botResponse]);
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Chatbot error:", error);
+      const errorMessage = {
+        id: (Date.now() + 2).toString(),
+        text: "Sorry, something went wrong. Please try again.",
+        isBot: true,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
+      */
   };
 
   // Auto-scroll to new message
@@ -63,8 +82,41 @@ function Chatbot() {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
+  const handleSelectCountry = (country) => {
+    setCurrCountry(country);
+    setShowSelector(false);
+  };
+
   return (
     <div className="chatbot-ui">
+      <div className={`country-overlay ${!showSelector ? "hidden" : ""}`}>
+        <div className="country-buttons">
+          {countries.map((c) => (
+            <button
+              key={c}
+              className="country-button"
+              onClick={() => handleSelectCountry(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <aside className={`country-aside ${showSelector ? "" : "visible"}`}>
+        {countries.map((c) => (
+          <button
+            key={c}
+            className={
+              c === currCountry ? "aside-button selected" : "aside-button"
+            }
+            onClick={() => setCurrCountry(c)}
+          >
+            {c}
+          </button>
+        ))}
+      </aside>
+
       <div className="chatbot-elements">
         <div className="chatbot-box">
           {!hasStartedChat ? (
@@ -73,7 +125,10 @@ function Chatbot() {
               <h2>AI-Enabled Information on Disaster Risk and Response</h2>
               <h3>Ask me anything—or click an example to get started</h3>
               <div className="carousel-container">
-                <PromptCarousel prompts={prompts} onPromptSelect={handleSendMessage} />
+                <PromptCarousel
+                  prompts={prompts}
+                  onPromptSelect={handleSendMessage}
+                />
               </div>
             </div>
           ) : (

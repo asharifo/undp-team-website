@@ -1,9 +1,9 @@
-import dotenv from "dotenv";
+/*import dotenv from "dotenv";
 dotenv.config();
 
 import { AstraDBVectorStore } from "@langchain/community/vectorstores/astradb";
 import { OpenAIEmbeddings } from "@langchain/openai";
-import {parse_docs} from ".ingest.js";
+import { parse_docs } from "./ingest.js";
 
 let vectorStorePromise;
 
@@ -43,4 +43,4 @@ export async function getVectorStore() {
         })();
     }
     return vectorStorePromise;
-}
+}*/
