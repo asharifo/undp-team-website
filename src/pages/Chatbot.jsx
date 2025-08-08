@@ -24,6 +24,7 @@ function Chatbot() {
   const [hasStartedChat, setHasStartedChat] = useState(false);
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [currCountry, setCurrCountry] = useState("");
   const messagesRef = useRef(null);
 
   const generateBotResponse = (userMessage) => {

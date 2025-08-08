@@ -1,57 +1,81 @@
-import 'dotenv/config';
-import path from 'node:path';
-import { glob } from 'glob';
-import { OpenAIEmbeddings } from "@langchain/openai";
-import { Chroma } from "@langchain/community/vectorstores/chroma";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import path from "path";
+import fs from "fs/promises";
+import { DirectoryLoader } from "langchain/document_loaders/fs/directory";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
-import { TextLoader } from "@langchain/community/document_loaders/fs/text";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { PuppeteerWebBaseLoader } from "@langchain/community/document_loaders/web/puppeteer";
+import { Document } from "langchain/document";
 
-const DOCS_DIR = process.env.DOCS_DIR || "./docs";
-const CHROMA_DIR = process.env.CHROMA_DIR || "./chroma-db";
+export async function parse_docs() {
+    const loader = new DirectoryLoader(
+        "src/documents",
+        {
+            ".pdf": (filePath) => new PDFLoader(filePath),
+            ".docx": (filePath) => new DocxLoader(filePath),
+            ".doc": (filePath) => new DocxLoader(filePath, { type: "doc" }),
+            ".url": (filePath) => new URLLoader(filePath),
+        },
+        { recursive: true }
+    );
+    const docs = await loader.load();
 
-const LoaderFor = (filepath) => {
-    const ext = path.extname(filepath).toLocaleLowerCase();
-    if (ext === ".pdf") return new PDFLoader(filepath);
-    if (ext === ".docx") return new DocxLoader(filepath);
-    if (ext === ".doc") return new DocxLoader(filepath, {type: "doc"});
-    return new TextLoader(filepath);
-};
-
-const getCountryFromPath = (filpath) => {
-    const parts = filepath.split(path.sep);
-    const idx = parts.indexOf(path.basename(DOCS_DIR));
-    return idx>=0 && parts[idx+1] ? parts[idx+1] : "Unknown";
-};
-
-async function run() {
-    const files = await glob((`${DOCS_DIR}/**/*.{pdf,docx,txt,md}`, { nocase: true }));
-    if (files.length === 0) {
-        console.log("no files found")
-        return;
+    for (const doc of docs) {
+        const fullPath = doc.metadata.source;
+        const parts = fullPath.split(path.sep);
+        const region = parts[parts.length - 2];
+        doc.metadata.region = region;
     }
+
     const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 500,
-        chunkOverlap: 100,
+        chunkSize: 1000,
+        chunkOverlap: 200,
     });
-    const allDocs = [];
-    for (const f of files) {
-        const country = getCountryFromPath(f);
-        const rawDocs = await LoaderFor(f).load;
-        const splitDocs = await splitter.splitDocuments(
-            rawDocs.map(d => ({
-                ...d,
-                metadata: {...d.metadata, country, source: f},
-            }))
-        );
-        allDocs.push(...splitDocs);
-    }
-    console.log("chunkes to store: ${allDocs.length}");
-    const embeddings = new OpenAIEmbeddings({model: "text-embedding-3-small"});
-    await Chroma.fromDocuments(allDocs, embeddings, {
-        collectionName: "disaster-docs",
-        persistDirectory: CHROMA_DIR,
-    });
-    console.log("DONE");
+
+    const splitDocs = await splitter.splitDocuments(docs);
+    return splitDocs;
 }
+
+class URLLoader {
+    constructor(filePath) {
+        this.filePath = filePath;
+    }
+
+    async load() {
+        // 1) read the .url file
+        const raw = await fs.readFile(this.filePath, "utf-8");
+
+        // 2) parse out the URL= line
+        const lines = raw.split(/\r?\n/);
+        const urlLine = lines.find((l) => l.trim().toUpperCase().startsWith("URL="));
+        if (!urlLine) {
+            throw new Error(`No URL= line found in ${this.filePath}`);
+        }
+        const url = urlLine.replace(/^URL=/i, "").trim();
+
+        // 3) fetch & clean the page with Puppeteer
+        const loader = new PuppeteerWebBaseLoader(url, {
+            launchOptions: { headless: true },
+            gotoOptions: { waitUntil: "domcontentloaded" },
+            evaluate: async (page, browser) => {
+                const html = await page.evaluate(() => document.body.innerHTML);
+                await browser.close();
+                return html;
+            }
+        });
+
+        const text = (await loader.scrape())
+            .replace(/<[^>]*>?/gm, "")   // strip tags
+            .trim();
+
+        // 4) wrap it in a LangChain Document
+        return [
+            new Document({
+                pageContent: text,
+                metadata: { source: url }
+            })
+        ];
+    }
+}
+
+
