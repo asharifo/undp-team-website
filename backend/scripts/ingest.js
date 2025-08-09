@@ -1,4 +1,4 @@
-/*import path from "path";
+import path from "path";
 import fs from "fs/promises";
 import { DirectoryLoader } from "langchain/document_loaders/fs/directory";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
@@ -78,4 +78,4 @@ class URLLoader {
     }
 }
 
-*/
+

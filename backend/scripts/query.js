@@ -1,4 +1,4 @@
-/*
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -10,15 +10,15 @@ const llm = new ChatOpenAI({
   temperature: 0.1,
 });
 
-/* 
+/*
  * Find the top 4 documents for a given question + country,
  * then ask ChatGPT to answer using those docs as context.
  *
  * @param {string} question – The user's question.
  * @param {string} country – The region metadata to filter 
  * @returns {Promise<string>} – ChatGPT's answer.
- */
-/*
+ * */
+
 export async function queryCountry(question, country) {
   const vectorStore = await getVectorStore();
 
@@ -43,4 +43,3 @@ export async function queryCountry(question, country) {
   ]]);
   return result.generations[0][0].message.content;
 }
-*/

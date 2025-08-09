@@ -4,7 +4,6 @@ import PromptCarousel from "../components/PromptCarousel";
 import InputForm from "../components/InputForm";
 import ChatMessage from "../components/ChatMessage";
 import TypingIndicator from "../components/TypingIndicator";
-//import { queryCountry } from "../scripts/query.js";
 
 const prompts = [
   "What are the recommended evacuation routes for wildfires in my region?",
@@ -38,43 +37,52 @@ function Chatbot() {
   const messagesRef = useRef(null);
 
   const handleSendMessage = async (messageText) => {
-    if (!hasStartedChat) {
-      setHasStartedChat(true);
+  if (!hasStartedChat) setHasStartedChat(true);
+
+  const userMessage = {
+    id: Date.now().toString(),
+    text: messageText,
+    isBot: false,
+    timestamp: new Date(),
+  };
+  setMessages((prev) => [...prev, userMessage]);
+  setIsTyping(true);
+
+  try {
+    const resp = await fetch("/api/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: messageText,
+        country: currCountry || "Kazakhstan" // fallback if you want
+      })
+    });
+
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}`);
     }
-    const userMessage = {
-      id: Date.now().toString(),
-      text: messageText,
-      isBot: false,
+
+    const data = await resp.json();
+    const botMessage = {
+      id: (Date.now() + 1).toString(),
+      text: data.answer ?? "No answer returned.",
+      isBot: true,
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsTyping(true);
-
-    /*
-    try {
-      const botText = await queryCountry(messageText, currCountry);
-
-      const botMessage = {
-        id: (Date.now() + 1).toString(),
-        text: botText,
-        isBot: true,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error("Chatbot error:", error);
-      const errorMessage = {
-        id: (Date.now() + 2).toString(),
-        text: "Sorry, something went wrong. Please try again.",
-        isBot: true,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsTyping(false);
-    }
-      */
-  };
+    setMessages((prev) => [...prev, botMessage]);
+  } catch (error) {
+    console.error("Chatbot error:", error);
+    const errorMessage = {
+      id: (Date.now() + 2).toString(),
+      text: "Sorry, something went wrong. Please try again.",
+      isBot: true,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, errorMessage]);
+  } finally {
+    setIsTyping(false);
+  }
+};
 
   // Auto-scroll to new message
   useEffect(() => {

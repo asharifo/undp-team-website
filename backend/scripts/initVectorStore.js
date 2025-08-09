@@ -1,4 +1,4 @@
-/*import dotenv from "dotenv";
+import dotenv from "dotenv";
 dotenv.config();
 
 import { AstraDBVectorStore } from "@langchain/community/vectorstores/astradb";
@@ -43,4 +43,4 @@ export async function getVectorStore() {
         })();
     }
     return vectorStorePromise;
-}*/
+}
