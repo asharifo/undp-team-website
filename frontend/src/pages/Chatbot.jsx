@@ -54,7 +54,7 @@ function Chatbot() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         question: messageText,
-        country: currCountry || "Kazakhstan" // fallback if you want
+        country: currCountry
       })
     });
 
@@ -71,7 +71,6 @@ function Chatbot() {
     };
     setMessages((prev) => [...prev, botMessage]);
   } catch (error) {
-    console.error("Chatbot error:", error);
     const errorMessage = {
       id: (Date.now() + 2).toString(),
       text: "Sorry, something went wrong. Please try again.",

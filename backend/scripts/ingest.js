@@ -6,15 +6,20 @@ import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { PuppeteerWebBaseLoader } from "@langchain/community/document_loaders/web/puppeteer";
 import { Document } from "langchain/document";
+import { fileURLToPath } from "url";
+
+// add website and excel file scraping functionalities
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export async function parse_docs() {
     const loader = new DirectoryLoader(
-        "src/documents",
+        path.join(__dirname, "../documents"),
         {
             ".pdf": (filePath) => new PDFLoader(filePath),
             ".docx": (filePath) => new DocxLoader(filePath),
             ".doc": (filePath) => new DocxLoader(filePath, { type: "doc" }),
-            ".url": (filePath) => new URLLoader(filePath),
+            //".url": (filePath) => new URLLoader(filePath),
         },
         { recursive: true }
     );
@@ -36,6 +41,7 @@ export async function parse_docs() {
     return splitDocs;
 }
 
+/*
 class URLLoader {
     constructor(filePath) {
         this.filePath = filePath;
@@ -77,5 +83,5 @@ class URLLoader {
         ];
     }
 }
-
+*/
 

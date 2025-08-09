@@ -1,17 +1,15 @@
+// server.js
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
+import morgan from "morgan";
 import { queryCountry } from "./scripts/query.js";
 
 dotenv.config();
-
 const app = express();
 const port = 5000;
 
-// If you rely on CRA/Vite proxy you can disable CORS.
-// Keeping it enabled is harmless for local dev if you don't proxy.
-app.use(cors());
 app.use(express.json());
+app.use(morgan("dev"));
 
 app.get("/health", (_req, res) => res.send("OK"));
 
@@ -24,8 +22,8 @@ app.post("/api/query", async (req, res) => {
     const answer = await queryCountry(question, country);
     res.json({ answer });
   } catch (err) {
-    console.error("API /api/query error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("API /api/query error:", err?.stack || err);
+    res.status(500).json({ error: err?.message || "Internal server error" });
   }
 });
 

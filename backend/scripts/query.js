@@ -1,45 +1,65 @@
+// query.js (ESM, server-side)
+import 'dotenv/config';
+import { DataAPIClient } from '@datastax/astra-db-ts';
+import { OpenAIEmbeddings, ChatOpenAI } from '@langchain/openai';
+import { SystemMessage, HumanMessage } from '@langchain/core/messages';
 
-import dotenv from "dotenv";
-dotenv.config();
+const {
+  OPENAI_API_KEY,
+  APPLICATION_TOKEN,
+  API_ENDPOINT,
+  KEYSPACE_NAME,
+  COLLECTION_NAME,
+} = process.env;
 
-import { getVectorStore } from "./initVectorStore.js";
-import { ChatOpenAI } from "@langchain/openai";
-
-const llm = new ChatOpenAI({
-  model: "gpt-4o-mini",
-  temperature: 0.1,
+const embeddings = new OpenAIEmbeddings({
+  model: 'text-embedding-3-small', 
+  openAIApiKey: OPENAI_API_KEY,
+  batchSize: 128,
 });
 
-/*
- * Find the top 4 documents for a given question + country,
- * then ask ChatGPT to answer using those docs as context.
- *
- * @param {string} question – The user's question.
- * @param {string} country – The region metadata to filter 
- * @returns {Promise<string>} – ChatGPT's answer.
- * */
+const llm = new ChatOpenAI({
+  model: 'gpt-4o-mini',
+  temperature: 0.1,
+  apiKey: OPENAI_API_KEY,
+});
+
+const client = new DataAPIClient(APPLICATION_TOKEN);
+const db = client.db(API_ENDPOINT, { namespace: KEYSPACE_NAME });
+const collection = db.collection(COLLECTION_NAME);
 
 export async function queryCountry(question, country) {
-  const vectorStore = await getVectorStore();
+  const qvec = await embeddings.embedQuery(question);
 
-  // Retrieve the top‐4 most similar docs, filtering on `metadata.region`
-  const docs = await vectorStore.similaritySearch(
-    question,
-    4,
-    { region: country }
-  );
+  const filter = { 'metadata.region': { $eq: country } };
+  const cursor = collection.find(filter, {
+    sort: { $vector: qvec },
+    limit: 4,
+    includeSimilarity: true, 
+  });
 
-  //Build a single context string from the snippets
-  const context = docs
-    .map((doc, i) => `--- Document ${i + 1} ---\n${doc.pageContent.trim()}`)
-    .join("\n\n");
+  const results = await cursor.toArray(); 
 
-  const systemPrompt = `You are an expert on natural disaster preparedness, information, and procedures from ${country}. Use the provided context to answer the user’s question as accurately as possible. Do not make up answers.`;
-  const userPrompt   = `Context:\n${context}\n\nQuestion:\n${question}`;
+  const context = results.length
+    ? results
+        .map((r, i) => {
+          const content = (r.text).toString().trim();
+          return `--- Document ${i + 1} ---\n${content}`;
+        })
+        .join('\n\n')
+    : '(none)';
 
-  const result = await llm.generate([[  
-    { role: "system", content: systemPrompt },
-    { role: "user",   content: userPrompt   },
-  ]]);
-  return result.generations[0][0].message.content;
+  const messages = [
+    new SystemMessage(
+      `You are an expert on natural disaster preparedness for ${country}. Use the context in your answer.`
+    ),
+    new HumanMessage(`Context:\n${context}\n\nQuestion:\n${question}`),
+  ];
+
+  const res = await llm.invoke(messages);
+
+  // 5) Normalize output to a plain string
+  return Array.isArray(res.content)
+    ? res.content.map(p => p?.text ?? '').join('')
+    : (res.content ?? '');
 }
