@@ -11,13 +11,11 @@ import mechanic from '../assets/mechanic.jpg';
 
 const IMAGES = [
     mountain,
+    mechanic,
     forest,
     farmer,
-    river,
-    garden,
     lake,
-    marsh,
-    mechanic
+    marsh
 ];
 
 function DisasterDimensions() {
