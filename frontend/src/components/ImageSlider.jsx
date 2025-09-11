@@ -1,184 +1,249 @@
-import { useEffect, useRef, useState, useLayoutEffect } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { gsap } from "gsap";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import FullscreenOverlay from "./FullscreenOverlay";
 
 gsap.registerPlugin(Draggable, InertiaPlugin);
 
 export default function ImageSlider({ images }) {
-  // refs
   const containerRef = useRef(null);
   const trackRef = useRef(null);
   const slideRefs = useRef([]);
-  const fullscreenRef = useRef(null);
-  const sectionsContainerRef = useRef(null);
   const draggableInstance = useRef(null);
+  const parallaxSetters = useRef([]);
+  const imageLoadedRef = useRef(new Set());
 
-  // state
-  const [isFullscreen, setFullscreen] = useState(false);
-  const [currIndex, setCurrIndex] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
-  // Carousel drag and parallax effect
+  // Preload and optimize images
+  const preloadImages = useCallback(() => {
+    let loadedCount = 0;
+    const totalImages = images.length;
+
+    images.forEach((src, index) => {
+      const img = new Image();
+      img.onload = () => {
+        imageLoadedRef.current.add(index);
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          setImagesLoaded(true);
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          setImagesLoaded(true);
+        }
+      };
+      // Add loading hints for better performance
+      img.decoding = "async";
+      img.loading = "eager";
+      img.src = src;
+    });
+  }, [images]);
+
+  // Preload images on mount
   useEffect(() => {
+    preloadImages();
+  }, [preloadImages]);
+
+  // Optimized animation loop with visibility culling
+  useEffect(() => {
+    if (!imagesLoaded) return;
+
     const container = containerRef.current;
     const track = trackRef.current;
     if (!container || !track) return;
 
     const maxDrag = track.scrollWidth - container.offsetWidth;
     const buffer = window.innerWidth * 0.5;
+    const PARALLAX_RATIO = 0.15;
+    const SCROLL_SENSITIVITY = 1.2;
+    const LERP_FACTOR = 0.12; // Slightly higher for more responsiveness
 
-    const images = slideRefs.current
-      .map((slide) => slide?.querySelector("img"))
-      .filter(Boolean);
-    const setters = images.map((img) => gsap.quickSetter(img, "x", "px"));
-    const PARALLAX_RATIO = 0.2;
+    // Setup optimized parallax with visibility culling
+    const slides = slideRefs.current.filter(Boolean);
+    const images = slides.map((slide) => slide?.querySelector("img")).filter(Boolean);
+    
+    // Force hardware acceleration and optimize rendering
+    images.forEach((img, i) => {
+      gsap.set(img, { 
+        force3D: true,
+        willChange: "transform",
+        backfaceVisibility: "hidden",
+        perspective: 1000
+      });
+      // Set loading attributes for better performance
+      img.style.imageRendering = "optimizeSpeed";
+      img.style.imageRendering = "-webkit-optimize-contrast";
+    });
 
-    function updateParallax(draggable) {
-      const trackX = draggable.x;
+    parallaxSetters.current = images.map((img) => gsap.quickSetter(img, "x", "px"));
+
+    // Smooth interpolation variables
+    let currentPosition = 0;
+    let targetPosition = 0;
+    let rafId = null;
+    let isAnimating = false;
+
+    // Visibility culling for better performance
+    function updateParallax(trackX) {
+      const containerRect = container.getBoundingClientRect();
       const shift = -trackX * PARALLAX_RATIO;
-      for (let i = 0; i < setters.length; i++) setters[i](shift);
-    } // make it so that images offscreen do not update
+      
+      slides.forEach((slide, i) => {
+        if (!slide) return;
+        
+        const slideRect = slide.getBoundingClientRect();
+        const isVisible = slideRect.right > -200 && slideRect.left < window.innerWidth + 200;
+        
+        if (isVisible && parallaxSetters.current[i]) {
+          parallaxSetters.current[i](shift);
+        }
+      });
+    }
 
+    // Optimized animation loop with better frame pacing
+    function animate() {
+      const delta = targetPosition - currentPosition;
+      
+      if (Math.abs(delta) > 0.5) {
+        currentPosition += delta * LERP_FACTOR;
+        
+        // Use transform3d for hardware acceleration
+        gsap.set(track, { 
+          x: currentPosition,
+          force3D: true
+        });
+        updateParallax(currentPosition);
+        rafId = requestAnimationFrame(animate);
+      } else {
+        // Snap to final position
+        gsap.set(track, { 
+          x: targetPosition,
+          force3D: true
+        });
+        updateParallax(targetPosition);
+        currentPosition = targetPosition;
+        isAnimating = false;
+        rafId = null;
+      }
+    }
+
+    // Optimized draggable instance
     const instance = Draggable.create(track, {
       type: "x",
       bounds: { minX: -maxDrag - buffer, maxX: buffer },
       inertia: true,
-      dragResistance: 0.3,
-      throwResistance: 2000,
+      dragResistance: 0.15,
+      throwResistance: 1200,
       cursor: "grab",
       onPress() {
         this.cursor = "grabbing";
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+          isAnimating = false;
+        }
       },
       onRelease() {
         this.cursor = "grab";
       },
       onDrag() {
-        updateParallax(this);
+        currentPosition = this.x;
+        targetPosition = this.x;
+        updateParallax(this.x);
       },
       onThrowUpdate() {
-        updateParallax(this);
+        currentPosition = this.x;
+        targetPosition = this.x;
+        updateParallax(this.x);
       },
     })[0];
 
-    updateParallax(instance);
+    currentPosition = instance.x;
+    targetPosition = instance.x;
+    updateParallax(instance.x);
     draggableInstance.current = instance;
-    return () => instance.kill();
-  }, []);
 
-  // Disable draggable and scroll down to transition back
-  useEffect(() => {
-    // Disable the draggable instance if in fullscreen mode
-    const inst = draggableInstance.current;
-    if (isFullscreen) {
-      inst?.disable();
-      // Scroll down to animate transition back to image-track
-      const onWheel = (e) => {
-        if (e.deltaY > 0) exitFullscreen();
-      };
-      window.addEventListener("wheel", onWheel);
-      return () => window.removeEventListener("wheel", onWheel);
-    } else {
-      inst?.enable();
-    }
-  }, [isFullscreen]);
-
-  // Thumbnail click to fullscreen mode
-  const handleThumbnailClick = (i) => {
-    setCurrIndex(i);
-    enterFullscreen();
-  };
-
-  useLayoutEffect(() => {
-    const track = trackRef.current;
-    const container = containerRef.current;
-    const tl = gsap.timeline();
-
-    if (isFullscreen) {
-      container.style.pointerEvents = "none";
-      track.style.pointerEvents = "none";
-      gsap.set(sectionsContainerRef.current, { xPercent: -currIndex * 100 });
-
-      slideRefs.current.forEach((slide, i) => {
-        if (slide) {
-          tl.to(
-            slide,
-            { y: "-100vh", duration: 0.2, ease: "power3.in" },
-            i * 0.05
-          );
-        }
-      });
-      gsap.to(fullscreenRef.current, {
-        y: 0,
-        delay: 0.1,
-        duration: 0.6,
-        ease: "power3.in",
-      });
-    } else {
-      container.style.pointerEvents = "auto";
-      track.style.pointerEvents = "auto";
-    }
-    return () => tl.kill();
-  }, [isFullscreen]);
-
-  // Enter fullscreen with staggered image slide‑up and fullscreen overlay rise
-  const enterFullscreen = () => {
-    setFullscreen(true);
-  };
-
-  // Exit fullscreen with overlay drop + slide‑down reset
-  const exitFullscreen = () => {
-    const tl = gsap.timeline({
-      onComplete: () => {
-        setFullscreen(false);
-      },
-    });
-
-    // Drop the overlay
-    const fsEl = fullscreenRef.current;
-    if (fsEl) {
-      tl.to(fsEl, { y: "100%", duration: 0.6, ease: "power3.in" });
-    }
-
-    // Slide thumbnails back down
-    slideRefs.current.forEach((slide, idx) => {
-      if (slide) {
-        tl.to(
-          slide,
-          { y: "0", duration: 0.2, ease: "power3.in" },
-          `-=${0.4 - idx * 0.05}`
-        );
+    // Throttled wheel handler for better performance
+    let wheelTimeout = null;
+    const handleWheel = (e) => {
+      if (isFullscreen) return;
+      
+      e.preventDefault();
+      
+      if (wheelTimeout) {
+        clearTimeout(wheelTimeout);
       }
-    });
+      
+      const scrollDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      const deltaX = scrollDelta * SCROLL_SENSITIVITY;
+      
+      targetPosition = Math.max(
+        -maxDrag - buffer,
+        Math.min(buffer, targetPosition - deltaX)
+      );
+      
+      if (!isAnimating) {
+        isAnimating = true;
+        rafId = requestAnimationFrame(animate);
+      }
+      
+      // Debounce for better performance
+      wheelTimeout = setTimeout(() => {
+        wheelTimeout = null;
+      }, 16);
+    };
+
+    // Handle fullscreen state changes
+    const handleFullscreenChange = () => {
+      if (isFullscreen) {
+        instance.disable();
+        container.style.pointerEvents = "none";
+        track.style.pointerEvents = "none";
+        container.removeEventListener("wheel", handleWheel);
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+          isAnimating = false;
+        }
+      } else {
+        instance.enable();
+        container.style.pointerEvents = "auto";
+        track.style.pointerEvents = "auto";
+        container.addEventListener("wheel", handleWheel, { passive: false });
+      }
+    };
+
+    handleFullscreenChange();
+
+    return () => {
+      instance.kill();
+      container.removeEventListener("wheel", handleWheel);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+      if (wheelTimeout) {
+        clearTimeout(wheelTimeout);
+      }
+    };
+  }, [isFullscreen, imagesLoaded]);
+
+  const handleThumbnailClick = (index) => {
+    setCurrentIndex(index);
+    setIsFullscreen(true);
   };
 
-  // Navigate between fullscreen sections
-  const navigateToSection = (newIndex) => {
-    if (
-      newIndex < 0 ||
-      newIndex >= images.length ||
-      newIndex === currIndex ||
-      !sectionsContainerRef.current
-    )
-      return;
-    gsap.to(sectionsContainerRef.current, {
-      xPercent: -newIndex * 100,
-      duration: 0.5,
-      ease: "power3.inOut",
-      onComplete: () => {
-        setCurrIndex(newIndex);
-      },
-    });
+  const handleFullscreenExit = () => {
+    setIsFullscreen(false);
   };
 
-  const handlePrevious = () => {
-    const newIndex = currIndex > 0 ? currIndex - 1 : images.length - 1;
-    navigateToSection(newIndex);
-  };
-
-  const handleNext = () => {
-    const newIndex = currIndex < images.length - 1 ? currIndex + 1 : 0;
-    navigateToSection(newIndex);
+  const handleIndexChange = (newIndex) => {
+    setCurrentIndex(newIndex);
   };
 
   return (
@@ -201,45 +266,13 @@ export default function ImageSlider({ images }) {
 
       {/* Fullscreen overlay */}
       {isFullscreen && (
-        <div ref={fullscreenRef} className="fullscreen-overlay">
-          <div className="fullscreen-content">
-            <button className="close-button" onClick={exitFullscreen}>
-              <X />
-            </button>
-
-            <button
-              className="nav-button nav-previous"
-              onClick={handlePrevious}
-            >
-              <ChevronLeft />
-            </button>
-
-            <div ref={sectionsContainerRef} className="sections-container">
-              {images.map((src, idx) => (
-                <div key={idx} className="fullscreen-section">
-                  <div className="section-content">
-                    <img
-                      src={src}
-                      alt={`Section ${idx + 1}`}
-                      className="section-image"
-                    />
-                    <div className="section-info">
-                      <h2 className="section-title">Section {idx + 1}</h2>
-                      <p className="section-description">
-                        This is the content for section {idx + 1}. You can add
-                        any content here—text, videos, etc.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button className="nav-button nav-next" onClick={handleNext}>
-              <ChevronRight />
-            </button>
-          </div>
-        </div>
+        <FullscreenOverlay
+          images={images}
+          currentIndex={currentIndex}
+          slideRefs={slideRefs}
+          onExit={handleFullscreenExit}
+          onIndexChange={handleIndexChange}
+        />
       )}
     </>
   );
