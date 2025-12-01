@@ -60,7 +60,7 @@ export default function ImageSlider({ images }) {
 
     const maxDrag = track.scrollWidth - container.offsetWidth;
     const buffer = window.innerWidth * 0.5;
-    const PARALLAX_RATIO = 0.15;
+    const PARALLAX_RATIO = 0.3;
     const SCROLL_SENSITIVITY = 1.2;
     const LERP_FACTOR = 0.12; // Slightly higher for more responsiveness
 

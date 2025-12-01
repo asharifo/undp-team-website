@@ -180,6 +180,7 @@
 }
 .country-aside.visible {
   left: 0; /* slide in */
+  justify-content: center;
 }
 
 .aside-button {

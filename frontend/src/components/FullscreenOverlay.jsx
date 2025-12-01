@@ -45,7 +45,7 @@ export default function FullscreenOverlay({
         setScrollAccumulator(newAccumulator);
 
         // Set threshold for exit (adjust as needed)
-        const EXIT_THRESHOLD = 150;
+        const EXIT_THRESHOLD = 20;
 
         // Only exit if we have significant upward scroll accumulation
         if (newAccumulator < -EXIT_THRESHOLD) {
